@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdbool.h>
+#include <stdint.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -91,6 +92,8 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+  static enum Direction_E Direction = DIRECTION_NOT_AVAILABLE;
+  static bool DirectionChanged = false;
 
   /* USER CODE END 1 */
 
@@ -121,21 +124,42 @@ int main(void)
   /* USER CODE BEGIN WHILE */
    while (1)
    {
+      /*** HANDLE FRQ_OUT GPIO ***/
       if ( TogglePin == true )
       {
          TogglePin = false;
          HAL_GPIO_TogglePin( FRQ_OUT_PORT, FRQ_OUT_PIN );
       }
 
+      /*** HANDLE HIGH-PULSE TIME ***/
+      // Check if button was pressed...
       if ( ButtonPressed == true )
       {
          ButtonPressed = false;
 
          // Toggle high-pulse time amounts
+         Direction = (enum Direction_E) ( ( (uint8_t)Direction + 1 ) % 2 );
+         DirectionChanged = true;
+      }
+      // Determine pulse-time needed, if direction has changed
+      if ( DirectionChanged == true )
+      {
+         DirectionChanged = false;
+         
+         // Do the math to compute new duty-cycle compare value...
          // TODO
       }
 
+
+      /*** HANDLE FREQUENCY ***/
       // Read ADC value and update timer auto-reload register (ARR) value to set new period
+      uint32_t old_timer_auto_reload_value = __HAL_TIM_GET_AUTORELOAD( &htim2 );
+      uint32_t new_timer_auto_reload_value = UINT32_MAX;
+
+      if ( new_timer_auto_reload_value != old_timer_auto_reload_value )
+      {
+         __HAL_TIM_SET_AUTORELOAD( &htim2, new_timer_auto_reload_value );
+      }
 
     /* USER CODE END WHILE */
 

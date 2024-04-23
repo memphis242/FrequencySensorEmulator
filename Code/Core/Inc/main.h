@@ -37,10 +37,23 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 
+enum Direction_E
+{
+   DIRECTION_FORWARD,
+   DIRECTION_REVERSE,
+   DIRECTION_ERROR,
+   DIRECTION_NOT_AVAILABLE
+};
+
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
+
+#define DIRECTION_FORWARD_HIGH_PULSE_TIME_NOMINAL     45.0f
+#define DIRECTION_FORWARD_HIGH_PULSE_TIME_TOLERANCE    7.0f
+#define DIRECTION_REVERSE_HIGH_PULSE_TIME_NOMINAL     45.0f
+#define DIRECTION_REVERSE_HIGH_PULSE_TIME_TOLERANCE   14.0f
 
 /* USER CODE END EC */
 
