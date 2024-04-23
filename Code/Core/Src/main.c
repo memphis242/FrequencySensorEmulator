@@ -46,7 +46,8 @@ TIM_HandleTypeDef htim2;
 /* USER CODE BEGIN PV */
 
 /* Public variables ---------------------------------------------------------*/
-volatile bool TogglePin = false;
+static volatile bool TogglePin;
+static volatile bool ButtonPressed;
 
 /* USER CODE END PV */
 
@@ -61,6 +62,25 @@ static void MX_TIM2_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+void HAL_TIM_PeriodElapsedCallback( TIM_HandleTypeDef * timer_handle )
+{
+   TogglePin = true;
+}
+
+/**
+  * @brief  EXTI line detection callback.
+  * @param  GPIO_Pin: Specifies the port pin connected to corresponding EXTI line.
+  * @retval None
+  */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+   if ( GPIO_Pin == B1_Pin )
+   {
+      ButtonPressed = true;
+   }
+}
+
+
 /* USER CODE END 0 */
 
 /**
@@ -70,35 +90,35 @@ static void MX_TIM2_Init(void);
 int main(void)
 {
 
-   /* USER CODE BEGIN 1 */
+  /* USER CODE BEGIN 1 */
 
-   /* USER CODE END 1 */
+  /* USER CODE END 1 */
 
-   /* MCU Configuration--------------------------------------------------------*/
+  /* MCU Configuration--------------------------------------------------------*/
 
-   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-   HAL_Init();
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
 
-   /* USER CODE BEGIN Init */
+  /* USER CODE BEGIN Init */
 
-   /* USER CODE END Init */
+  /* USER CODE END Init */
 
-   /* Configure the system clock */
-   SystemClock_Config();
+  /* Configure the system clock */
+  SystemClock_Config();
 
-   /* USER CODE BEGIN SysInit */
+  /* USER CODE BEGIN SysInit */
 
-   /* USER CODE END SysInit */
+  /* USER CODE END SysInit */
 
-   /* Initialize all configured peripherals */
-   MX_GPIO_Init();
-   MX_TIM2_Init();
-   /* USER CODE BEGIN 2 */
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_TIM2_Init();
+  /* USER CODE BEGIN 2 */
 
-   /* USER CODE END 2 */
+  /* USER CODE END 2 */
 
-   /* Infinite loop */
-   /* USER CODE BEGIN WHILE */
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
    while (1)
    {
       if ( TogglePin == true )
@@ -107,11 +127,21 @@ int main(void)
          HAL_GPIO_TogglePin( FRQ_OUT_PORT, FRQ_OUT_PIN );
       }
 
-      /* USER CODE END WHILE */
+      if ( ButtonPressed == true )
+      {
+         ButtonPressed = false;
 
-      /* USER CODE BEGIN 3 */
+         // Toggle high-pulse time amounts
+         // TODO
+      }
+
+      // Read ADC value and update timer auto-reload register (ARR) value to set new period
+
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
    }
-   /* USER CODE END 3 */
+  /* USER CODE END 3 */
 }
 
 /**
@@ -240,7 +270,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
@@ -310,6 +340,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.Alternate = GPIO_AF10_OTG1_FS;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
