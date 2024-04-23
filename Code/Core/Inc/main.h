@@ -61,6 +61,8 @@ void Error_Handler(void);
 #define B1_GPIO_Port GPIOC
 #define LD1_Pin GPIO_PIN_0
 #define LD1_GPIO_Port GPIOB
+#define Frq_Out_Pin GPIO_PIN_10
+#define Frq_Out_GPIO_Port GPIOE
 #define LD3_Pin GPIO_PIN_14
 #define LD3_GPIO_Port GPIOB
 #define STLINK_RX_Pin GPIO_PIN_8
@@ -79,6 +81,10 @@ void Error_Handler(void);
 #define LD2_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
+#define BLUE_BUTTON_PIN   B1_Pin
+#define BLUE_BUTTON_PORT  B1_GPIO_Port
+#define FRQ_OUT_PIN       Frq_Out_Pin
+#define FRQ_OUT_PORT      Frq_Out_GPIO_Port
 
 /* USER CODE END Private defines */
 
