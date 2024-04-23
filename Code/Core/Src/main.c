@@ -41,6 +41,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc3;
 
 TIM_HandleTypeDef htim2;
 
@@ -49,6 +50,7 @@ TIM_HandleTypeDef htim2;
 /* Public variables ---------------------------------------------------------*/
 static volatile bool TogglePin;
 static volatile bool ButtonPressed;
+static volatile bool ADC_ConversionComplete;
 
 /* USER CODE END PV */
 
@@ -56,6 +58,7 @@ static volatile bool ButtonPressed;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_ADC3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -81,6 +84,21 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
    }
 }
 
+void HAL_ADC_ConvCpltCallback( ADC_HandleTypeDef * adc_handle )
+{
+   // Check if interrupt came from an end-of-conversion (EOC) event...
+   if( __HAL_ADC_GET_FLAG(adc_handle, ADC_FLAG_EOC) )
+   {
+      /* NOTE-WORTHY ADC HAL API:
+       *    __HAL_ADC_CALC_VREFANALOG_VOLTAGE
+       *    __HAL_ADC_CALC_DATA_TO_VOLTAGE
+       *    
+       */
+      ADC_ConversionComplete = true;
+      // No need to clear any ADC registers because that is handled in IRQ routine that calls this callback.
+   }
+}
+
 
 /* USER CODE END 0 */
 
@@ -94,6 +112,9 @@ int main(void)
   /* USER CODE BEGIN 1 */
   static enum Direction_E Direction = DIRECTION_NOT_AVAILABLE;
   static bool DirectionChanged = false;
+  static bool ADC_ConversionInProgress = false;
+  static float Frequency = 0.0f;
+  static uint32_t HighPulseTime = 0u;
 
   /* USER CODE END 1 */
 
@@ -116,6 +137,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_TIM2_Init();
+  MX_ADC3_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -147,14 +169,33 @@ int main(void)
          DirectionChanged = false;
          
          // Do the math to compute new duty-cycle compare value...
+         // Get current period in us
+         // Compute best approximation to direction high-pulse time in timer counts...
          // TODO
       }
-
 
       /*** HANDLE FREQUENCY ***/
       // Read ADC value and update timer auto-reload register (ARR) value to set new period
       uint32_t old_timer_auto_reload_value = __HAL_TIM_GET_AUTORELOAD( &htim2 );
       uint32_t new_timer_auto_reload_value = UINT32_MAX;
+      uint32_t adc_reading = 0;
+
+      // Start ADC conversion if one is not started already...
+      if ( ADC_ConversionInProgress == false )
+      {
+         HAL_ADC_GetValue( &hadc3 );
+         ADC_ConversionInProgress = true;
+      }
+      else if ( ADC_ConversionComplete == true )
+      {
+         ADC_ConversionComplete = false;
+         adc_reading = HAL_ADC_GetValue( &hadc3 );
+      }
+      // Convert this ADC reading into a frequency...
+      // TODO
+
+      // Compute corresponding ARR value
+      // TODO
 
       if ( new_timer_auto_reload_value != old_timer_auto_reload_value )
       {
@@ -187,6 +228,10 @@ void SystemClock_Config(void)
 
   while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
 
+  /** Macro to configure the PLL clock source
+  */
+  __HAL_RCC_PLL_PLLSOURCE_CONFIG(RCC_PLLSOURCE_HSI);
+
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
@@ -216,6 +261,64 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief ADC3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC3_Init(void)
+{
+
+  /* USER CODE BEGIN ADC3_Init 0 */
+
+  /* USER CODE END ADC3_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC3_Init 1 */
+
+  /* USER CODE END ADC3_Init 1 */
+
+  /** Common config
+  */
+  hadc3.Instance = ADC3;
+  hadc3.Init.Resolution = ADC_RESOLUTION_16B;
+  hadc3.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc3.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc3.Init.LowPowerAutoWait = DISABLE;
+  hadc3.Init.ContinuousConvMode = DISABLE;
+  hadc3.Init.NbrOfConversion = 1;
+  hadc3.Init.DiscontinuousConvMode = DISABLE;
+  hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc3.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;
+  hadc3.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc3.Init.LeftBitShift = ADC_LEFTBITSHIFT_NONE;
+  hadc3.Init.OversamplingMode = DISABLE;
+  if (HAL_ADC_Init(&hadc3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  sConfig.OffsetSignedSaturation = DISABLE;
+  if (HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC3_Init 2 */
+
+  /* USER CODE END ADC3_Init 2 */
+
 }
 
 /**
