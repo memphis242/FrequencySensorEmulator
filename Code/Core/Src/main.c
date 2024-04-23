@@ -31,7 +31,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define DEBOUNCE_WAIT_TIME              50
+#define ARR_TABLE_INITIALIZATION_VALUE  ( (uint32_t) ( ( DIRECTION_FORWARD_HIGH_PULSE_TIME_NOMINAL - DIRECTION_FORWARD_HIGH_PULSE_TIME_TOLERANCE ) * TIMER_COUNTS_PER_NANOSECOND ) )
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -50,7 +51,7 @@ TIM_HandleTypeDef htim2;
 static volatile bool OnHighPulse;
 static volatile bool ButtonPressed;
 static volatile bool ADC_ConversionComplete;
-static uint32_t ARR_Reload_Values[] = { UINT32_MAX, UINT32_MAX };
+static uint32_t ARR_Reload_Values[] = { ARR_TABLE_INITIALIZATION_VALUE, ARR_TABLE_INITIALIZATION_VALUE };
 static uint8_t ARR_Reload_Value_Idx;
 
 /* USER CODE END PV */
@@ -147,7 +148,6 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   MX_ADC3_Init();
-
   /* USER CODE BEGIN 2 */
 
    HAL_TIM_Base_Start_IT(&htim2);
@@ -172,9 +172,10 @@ int main(void)
       if ( ButtonPressed == true )
       {
          ButtonPressed = false;
+         HAL_Delay( DEBOUNCE_WAIT_TIME );  // TODO: Handle debounces without a delay... --> Suggestion: Use another timer and a flag in the ISR that prevents immediate setting of flag...
 
          // Toggle high-pulse time amounts
-         Direction = (enum Direction_E) ( ( (uint8_t)Direction + 1 ) % ( (uint8_t)DIRECTION_ERROR + 1 ) );
+         Direction = (enum Direction_E) ( ( (int)Direction + 1 ) % ( (int)DIRECTION_ERROR + 1 ) );
          UpdateOutput = true;
       }
 
@@ -397,7 +398,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 4294967295;
+  htim2.Init.Period = 18285714;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
