@@ -21,8 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdbool.h>
-#include <stdint.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,9 +47,11 @@ TIM_HandleTypeDef htim2;
 /* USER CODE BEGIN PV */
 
 /* Public variables ---------------------------------------------------------*/
-static volatile bool TogglePin;
+static volatile bool OnHighPulse;
 static volatile bool ButtonPressed;
 static volatile bool ADC_ConversionComplete;
+static uint32_t ARR_Reload_Values[] = { UINT32_MAX, UINT32_MAX };
+static uint8_t ARR_Reload_Value_Idx;
 
 /* USER CODE END PV */
 
@@ -68,7 +69,13 @@ static void MX_ADC3_Init(void);
 
 void HAL_TIM_PeriodElapsedCallback( TIM_HandleTypeDef * timer_handle )
 {
-   TogglePin = true;
+   HAL_GPIO_TogglePin( FRQ_OUT_PORT, FRQ_OUT_PIN );
+   
+   // Load next ARR value into ARR
+   __HAL_TIM_SET_AUTORELOAD( &htim2, ARR_Reload_Values[ ARR_Reload_Value_Idx ] );
+   
+   // Update index for next run
+   ARR_Reload_Value_Idx = ( ARR_Reload_Value_Idx + 1 ) % (sizeof(ARR_Reload_Values) / sizeof(uint32_t));
 }
 
 /**
@@ -100,6 +107,9 @@ void HAL_ADC_ConvCpltCallback( ADC_HandleTypeDef * adc_handle )
 }
 
 
+/*** Private Helper Functions ***/
+STATIC Hz_T Interpolate_ADCCount_To_Frq( uint16_t adc_count );
+
 /* USER CODE END 0 */
 
 /**
@@ -110,11 +120,6 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  static enum Direction_E Direction = DIRECTION_NOT_AVAILABLE;
-  static bool DirectionChanged = false;
-  static bool ADC_ConversionInProgress = false;
-  static float Frequency = 0.0f;
-  static uint32_t HighPulseTime = 0u;
 
   /* USER CODE END 1 */
 
@@ -146,38 +151,28 @@ int main(void)
   /* USER CODE BEGIN WHILE */
    while (1)
    {
-      /*** HANDLE FRQ_OUT GPIO ***/
-      if ( TogglePin == true )
-      {
-         TogglePin = false;
-         HAL_GPIO_TogglePin( FRQ_OUT_PORT, FRQ_OUT_PIN );
-      }
+      static enum Direction_E Direction = DIRECTION_NOT_AVAILABLE;
+      static bool UpdateOutput = false;
+      static bool ADC_ConversionInProgress = false;
+      static uint16_t Previous_ADCValue = 0u;
+      static float Frequency = 0.0f;
 
-      /*** HANDLE HIGH-PULSE TIME ***/
+      /*** HANDLE FRQ_OUT GPIO ***/
+      
+
+      /*** HANDLE USER INPUT FOR HIGH-PULSE TIME ***/
       // Check if button was pressed...
       if ( ButtonPressed == true )
       {
          ButtonPressed = false;
 
          // Toggle high-pulse time amounts
-         Direction = (enum Direction_E) ( ( (uint8_t)Direction + 1 ) % 2 );
-         DirectionChanged = true;
-      }
-      // Determine pulse-time needed, if direction has changed
-      if ( DirectionChanged == true )
-      {
-         DirectionChanged = false;
-         
-         // Do the math to compute new duty-cycle compare value...
-         // Get current period in us
-         // Compute best approximation to direction high-pulse time in timer counts...
-         // TODO
+         Direction = (enum Direction_E) ( ( (uint8_t)Direction + 1 ) % ( (uint8_t)DIRECTION_ERROR + 1 ) );
+         UpdateOutput = true;
       }
 
-      /*** HANDLE FREQUENCY ***/
+      /*** HANDLE USER INPUT FOR FREQUENCY ***/
       // Read ADC value and update timer auto-reload register (ARR) value to set new period
-      uint32_t old_timer_auto_reload_value = __HAL_TIM_GET_AUTORELOAD( &htim2 );
-      uint32_t new_timer_auto_reload_value = UINT32_MAX;
       uint32_t adc_reading = 0;
 
       // Start ADC conversion if one is not started already...
@@ -190,16 +185,67 @@ int main(void)
       {
          ADC_ConversionComplete = false;
          adc_reading = HAL_ADC_GetValue( &hadc3 );
+         if ( adc_reading != Previous_ADCValue )
+         {
+            UpdateOutput = true;
+            Previous_ADCValue = adc_reading;
+         }
       }
-      // Convert this ADC reading into a frequency...
-      // TODO
 
-      // Compute corresponding ARR value
-      // TODO
-
-      if ( new_timer_auto_reload_value != old_timer_auto_reload_value )
+      /*** HANDLE FREQUENCY OUTPUT ***/
+      if ( UpdateOutput == true )
       {
-         __HAL_TIM_SET_AUTORELOAD( &htim2, new_timer_auto_reload_value );
+         uint32_t high_pulse_time_arr_value;
+         float period_us;
+         uint32_t period_in_timer_counts;
+         
+         UpdateOutput = false;
+
+         // Convert this ADC reading into a frequency...
+         Frequency = Interpolate_ADCCount_To_Frq( adc_reading );
+         period_us = 1.0e9 / (float)Frequency;
+         period_in_timer_counts = (uint32_t) ( period_us * TIMER_COUNTS_PER_NANOSECOND );
+
+         // Figure out new high-pulse time
+         switch( Direction )
+         {
+            case DIRECTION_FORWARD_MIN:
+               high_pulse_time_arr_value = (uint32_t) ( ( DIRECTION_FORWARD_HIGH_PULSE_TIME_NOMINAL - DIRECTION_FORWARD_HIGH_PULSE_TIME_TOLERANCE ) * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+
+            case DIRECTION_FORWARD_NOMINAL:
+               high_pulse_time_arr_value = (uint32_t) ( DIRECTION_FORWARD_HIGH_PULSE_TIME_NOMINAL * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+
+            case DIRECTION_FORWARD_MAX:
+               high_pulse_time_arr_value = (uint32_t) ( ( DIRECTION_FORWARD_HIGH_PULSE_TIME_NOMINAL + DIRECTION_FORWARD_HIGH_PULSE_TIME_TOLERANCE ) * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+
+            case DIRECTION_REVERSE_MIN:
+               high_pulse_time_arr_value = (uint32_t) ( ( DIRECTION_REVERSE_HIGH_PULSE_TIME_NOMINAL - DIRECTION_REVERSE_HIGH_PULSE_TIME_TOLERANCE ) * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+
+            case DIRECTION_REVERSE_NOMINAL:
+               high_pulse_time_arr_value = (uint32_t) ( DIRECTION_REVERSE_HIGH_PULSE_TIME_NOMINAL * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+
+            case DIRECTION_REVERSE_MAX:
+               high_pulse_time_arr_value = (uint32_t) ( ( DIRECTION_REVERSE_HIGH_PULSE_TIME_NOMINAL + DIRECTION_REVERSE_HIGH_PULSE_TIME_TOLERANCE ) * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+
+            case DIRECTION_ERROR:
+               high_pulse_time_arr_value = (uint32_t) ( DIRECTION_ERROR_HIGH_PULSE_TIME * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+
+            default:
+               high_pulse_time_arr_value = (uint32_t) ( DIRECTION_ERROR_HIGH_PULSE_TIME * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+         }
+
+         // Update ARR reload array
+         // TODO: Need to update this table atomically!
+         ARR_Reload_Values[0] = high_pulse_time_arr_value;
+         ARR_Reload_Values[1] = ( period_in_timer_counts - high_pulse_time_arr_value );
       }
 
     /* USER CODE END WHILE */
@@ -477,6 +523,11 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+STATIC Hz_T Interpolate_ADCCount_To_Frq( uint16_t adc_count )
+{
+   return (Hz_T) ( ( (Hz_T)adc_count * (MAX_FREQUENCY_TO_TEST - MIN_FREQUENCY_TO_TEST) / ( MAX_ADC_COUNT(&hadc3) - MIN_ADC_COUNT ) ) ) + (Hz_T)MIN_FREQUENCY_TO_TEST;
+}
 
 /* USER CODE END 4 */
 

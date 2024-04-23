@@ -28,6 +28,8 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32h7xx_hal.h"
+#include <stdbool.h>
+#include <stdint.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -39,26 +41,50 @@ extern "C" {
 
 enum Direction_E
 {
-   DIRECTION_FORWARD,
-   DIRECTION_REVERSE,
+   DIRECTION_FORWARD_MIN,
+   DIRECTION_FORWARD_NOMINAL,
+   DIRECTION_FORWARD_MAX,
+   DIRECTION_REVERSE_MIN,
+   DIRECTION_REVERSE_NOMINAL,
+   DIRECTION_REVERSE_MAX,
    DIRECTION_ERROR,
    DIRECTION_NOT_AVAILABLE
 };
+
+typedef float    Hz_T;
+typedef uint32_t us_T;
 
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 
-#define DIRECTION_FORWARD_HIGH_PULSE_TIME_NOMINAL     45.0f
+#define DIRECTION_FORWARD_HIGH_PULSE_TIME_NOMINAL     45.0f // us
 #define DIRECTION_FORWARD_HIGH_PULSE_TIME_TOLERANCE    7.0f
 #define DIRECTION_REVERSE_HIGH_PULSE_TIME_NOMINAL     45.0f
 #define DIRECTION_REVERSE_HIGH_PULSE_TIME_TOLERANCE   14.0f
+#define DIRECTION_ERROR_HIGH_PULSE_TIME               200.0f
+
+#define MIN_FREQUENCY_TO_TEST                         3.5   // Hz
+#define MAX_FREQUENCY_TO_TEST                         2660.0
+
+#define MAX_ADC_COUNT(adc_handle)                     __HAL_ADC_DIGITAL_SCALE((adc_handle)->Init.Resolution)
+#define MIN_ADC_COUNT                                 0u
+
+#define TIMER_CLOCK_RATE_HZ                           64000000 // TODO: Use an actual generated config for this; just need to find it. Candidate macro: HSI_VALUE of Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_ll_rcc.h
+#define NANOSECONDS_PER_TIMER_COUNT                   ( (float)( 1.0e9f / (float)TIMER_CLOCK_RATE_HZ ) )
+#define TIMER_COUNTS_PER_NANOSECOND                   ( 1.0f / NANOSECONDS_PER_TIMER_COUNT )
 
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
+
+#ifdef UNIT_TEST
+   #define STATIC
+#else
+   #define STATIC static
+#endif
 
 /* USER CODE END EM */
 
