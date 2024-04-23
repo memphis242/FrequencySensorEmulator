@@ -69,13 +69,16 @@ static void MX_ADC3_Init(void);
 
 void HAL_TIM_PeriodElapsedCallback( TIM_HandleTypeDef * timer_handle )
 {
-   HAL_GPIO_TogglePin( FRQ_OUT_PORT, FRQ_OUT_PIN );
-   
-   // Load next ARR value into ARR
-   __HAL_TIM_SET_AUTORELOAD( &htim2, ARR_Reload_Values[ ARR_Reload_Value_Idx ] );
-   
-   // Update index for next run
-   ARR_Reload_Value_Idx = ( ARR_Reload_Value_Idx + 1 ) % (sizeof(ARR_Reload_Values) / sizeof(uint32_t));
+   if ( timer_handle == &htim2 )
+   {
+      HAL_GPIO_TogglePin( FRQ_OUT_PORT, FRQ_OUT_PIN );
+      
+      // Load next ARR value into ARR
+      __HAL_TIM_SET_AUTORELOAD( &htim2, ARR_Reload_Values[ ARR_Reload_Value_Idx ] );
+      
+      // Update index for next run
+      ARR_Reload_Value_Idx = ( ARR_Reload_Value_Idx + 1 ) % (sizeof(ARR_Reload_Values) / sizeof(uint32_t));
+   }
 }
 
 /**
@@ -91,20 +94,21 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
    }
 }
 
-void HAL_ADC_ConvCpltCallback( ADC_HandleTypeDef * adc_handle )
-{
-   // Check if interrupt came from an end-of-conversion (EOC) event...
-   if( __HAL_ADC_GET_FLAG(adc_handle, ADC_FLAG_EOC) )
-   {
-      /* NOTE-WORTHY ADC HAL API:
-       *    __HAL_ADC_CALC_VREFANALOG_VOLTAGE
-       *    __HAL_ADC_CALC_DATA_TO_VOLTAGE
-       *    
-       */
-      ADC_ConversionComplete = true;
-      // No need to clear any ADC registers because that is handled in IRQ routine that calls this callback.
-   }
-}
+//void HAL_ADC_ConvCpltCallback( ADC_HandleTypeDef * adc_handle )
+//{
+////   // Check if interrupt came from an end-of-conversion (EOC) event...
+////   if( __HAL_ADC_GET_FLAG(adc_handle, ADC_FLAG_EOC) )
+////   {
+////      /* NOTE-WORTHY ADC HAL API:
+////       *    __HAL_ADC_CALC_VREFANALOG_VOLTAGE
+////       *    __HAL_ADC_CALC_DATA_TO_VOLTAGE
+////       *    
+////       */
+////      ADC_ConversionComplete = true;
+////      // No need to clear any ADC registers because that is handled in IRQ routine that calls this callback.
+////   }
+//   ADC_ConversionComplete = true;
+//}
 
 
 /*** Private Helper Functions ***/
@@ -143,7 +147,10 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   MX_ADC3_Init();
+
   /* USER CODE BEGIN 2 */
+
+   HAL_TIM_Base_Start_IT(&htim2);
 
   /* USER CODE END 2 */
 
@@ -178,12 +185,14 @@ int main(void)
       // Start ADC conversion if one is not started already...
       if ( ADC_ConversionInProgress == false )
       {
-         HAL_ADC_GetValue( &hadc3 );
+         (void)HAL_ADC_Start( &hadc3 );   // TODO: Use status return value
          ADC_ConversionInProgress = true;
-      }
-      else if ( ADC_ConversionComplete == true )
-      {
+         HAL_ADC_PollForConversion(&hadc3, 80);
+      //}
+      //else if ( ADC_ConversionComplete == true )
+      //{
          ADC_ConversionComplete = false;
+         ADC_ConversionInProgress = false;
          adc_reading = HAL_ADC_GetValue( &hadc3 );
          if ( adc_reading != Previous_ADCValue )
          {
