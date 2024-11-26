@@ -1,6 +1,3 @@
 {
-    "files.associations": {
-        "stdint.h": "c"
-    },
     "editor.tabSize": 3
 }
