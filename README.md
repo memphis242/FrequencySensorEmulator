@@ -1,5 +1,15 @@
 # Frequency Sensor Emulator
-At work, I had the need for a device that could produce particular subset of square wave signals. No function generator around could do exactly what I needed, so I decided this was enough to do with almost any microcontroller around. I selected the STMicroelectronics Nucleo-144 STM32H743ZI2 board along with some additional circuitry on a breadboard for the prototype. That worked quite well and just for fun and learning, I plan to bring this up to a professional-grade product.
+At work, I had the need for a device that could produce a square wave signal with a specified frequency and "high pulse time" (how long the HIGH portion of the wave is, in microseconds µs). Why high pulse time instead of duty cycle? Of course, duty cycle _can_ work, but really, the high pulse time _across a frequency range_ was what mattered (e.g., a high pulse time of 45µs means something specific, regardless of frequency).  
+
+No function generator around could do exactly what I needed (duty cycle resolution was not enough, and was super inconvenient to utilize regardless), so I decided that this was easy enough to do with almost any microcontroller. I selected the STMicroelectronics Nucleo-144 STM32H743ZI2 development board that I just had on hand from college along with some additional circuitry on a breadboard for the prototype. That worked quite well! :partying_face:  
+
+I intend to "professionalize" this device by
+
+1. bringing the software to higher quality standards,
+2. giving it a friendlier user interface,
+3. improving the reliability of the produced waveform.
+
+Overall, this is to make the device easier to use and make it more trustworthy, as well as for my own personal enjoyment and skill-sharpening.
 
 # Device Demo
 ### Prototype
