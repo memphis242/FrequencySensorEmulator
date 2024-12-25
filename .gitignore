@@ -54,3 +54,6 @@ dkms.conf
 # Eclipse
 Debug/
 Release/
+
+# KiCad
+*backups/
