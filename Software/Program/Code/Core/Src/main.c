@@ -31,8 +31,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define DEBOUNCE_WAIT_TIME              50
-#define ARR_TABLE_INITIALIZATION_VALUE  ( (uint32_t) ( ( DIRECTION_FORWARD_HIGH_PULSE_TIME_NOMINAL - DIRECTION_FORWARD_HIGH_PULSE_TIME_TOLERANCE ) * TIMER_COUNTS_PER_NANOSECOND ) )
+#define PUSH_BUTTON_DEBOUNCE_WAIT_TIME              50  // Amount of time _after_ an edge (on the digital input connected to the push button) to ignore any level changes
+// Value to load into the ARR (Auto Reload Register) at startup:
+#define AUTO_RELOD_REGISTER_INITIAL_VALUE           ( (uint32_t) ((DIRECTION_FORWARD_HIGH_PULSE_TIME_NOMINAL - DIRECTION_FORWARD_HIGH_PULSE_TIME_TOLERANCE) * \
+                                                                   TIMER_COUNTS_PER_NANOSECOND) )
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -47,12 +49,15 @@ TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
 
-/* Public variables ---------------------------------------------------------*/
+/* Private variables ---------------------------------------------------------*/
 static volatile bool OnHighPulse;
 static volatile bool ButtonPressed;
 static volatile bool ADC_ConversionComplete;
-static uint32_t ARR_Reload_Values[] = { ARR_TABLE_INITIALIZATION_VALUE, ARR_TABLE_INITIALIZATION_VALUE };
-static uint8_t ARR_Reload_Value_Idx;
+static uint32_t AutoReloadRegister_Reload_Values[2] = { AUTO_RELOD_REGISTER_INITIAL_VALUE, AUTO_RELOD_REGISTER_INITIAL_VALUE };
+static bool AutoReloadRegister_Reload_Value_Idx;  // Even though this is an index, and would typically be an integer, the array being
+                                                  // indexed into is guaranteed here to be of size 2, so a boolean suffices and works
+                                                  // for me in multiple ways. For example, a boolean sanitizer check would also work to
+                                                  // bounds-check for me with this.
 
 /* USER CODE END PV */
 
@@ -68,6 +73,16 @@ static void MX_ADC3_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+/* Algorithm Explanation
+ * The algorithm used to produce the square wave output with variable high pulse time is as follows:
+ *    - On every timer interrupt, the frequency output pin is toggled and the Auto Reload Register (ARR)
+ *      is updated with the next value of the AutoReloadRegister_Reload_Values[] array.
+ * The ARR value represents when the next timer interrupt will occur. So, by setting this register to the count threshold
+ * that corresponds to the high pulse time and then the low pulse time, we can easily control the square wave's high
+ * and low widths.
+ * The AutoReloadRegister_Reload_Values[] array represents the high pulse time and low pulse times. It follows
+ * that the sum of these two values represents the period of the signal.
+ */
 void HAL_TIM_PeriodElapsedCallback( TIM_HandleTypeDef * timer_handle )
 {
    if ( timer_handle == &htim2 )
@@ -75,10 +90,10 @@ void HAL_TIM_PeriodElapsedCallback( TIM_HandleTypeDef * timer_handle )
       HAL_GPIO_TogglePin( FRQ_OUT_PORT, FRQ_OUT_PIN );
       
       // Load next ARR value into ARR
-      __HAL_TIM_SET_AUTORELOAD( &htim2, ARR_Reload_Values[ ARR_Reload_Value_Idx ] );
+      __HAL_TIM_SET_AUTORELOAD( &htim2, AutoReloadRegister_Reload_Values[ AutoReloadRegister_Reload_Value_Idx ] );
       
       // Update index for next run
-      ARR_Reload_Value_Idx = ( ARR_Reload_Value_Idx + 1 ) % (sizeof(ARR_Reload_Values) / sizeof(uint32_t));
+      AutoReloadRegister_Reload_Value_Idx != AutoReloadRegister_Reload_Value_Idx;
    }
 }
 
@@ -172,7 +187,7 @@ int main(void)
       if ( ButtonPressed == true )
       {
          ButtonPressed = false;
-         HAL_Delay( DEBOUNCE_WAIT_TIME );  // TODO: Handle debounces without a delay... --> Suggestion: Use another timer and a flag in the ISR that prevents immediate setting of flag...
+         HAL_Delay( PUSH_BUTTON_DEBOUNCE_WAIT_TIME );  // TODO: Handle debounces without a delay... --> Suggestion: Use another timer and a flag in the ISR that prevents immediate setting of flag...
 
          // Toggle high-pulse time amounts
          Direction = (enum Direction_E) ( ( (int)Direction + 1 ) % ( (int)DIRECTION_ERROR + 1 ) );
@@ -254,8 +269,8 @@ int main(void)
 
          // Update ARR reload array
          // TODO: Need to update this table atomically!
-         ARR_Reload_Values[0] = high_pulse_time_arr_value;
-         ARR_Reload_Values[1] = ( period_in_timer_counts - high_pulse_time_arr_value );
+         AutoReloadRegister_Reload_Values[0] = high_pulse_time_arr_value;
+         AutoReloadRegister_Reload_Values[1] = ( period_in_timer_counts - high_pulse_time_arr_value );
       }
 
     /* USER CODE END WHILE */
