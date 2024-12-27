@@ -128,6 +128,7 @@ This particular document is the System Requirements Document, where top-level sy
    a. Output is disabled  
    b. Active screen is the main screen  
 1. `SYS_FUNC_07`: The device's output current shall be ≤ 50mA.
+1. `SYS_FUNC_08`: The device shall keep track of time using a real-time clock, and support the user setting a time.
 
 ## Diagnostics
 ### Diagnostic Faults
@@ -198,3 +199,4 @@ Every diagnostic fault has a name, a description, severity level, an associated 
 1. `SYS_DIAG_06`: For every digital output, the device shall confirm that the output level matches the intended drive to within 100ms.
 1. `SYS_DIAG_07`: The device shall monitor display faults and record a separate fault for each fault reported by the display.
 1. `SYS_DIAG_08`: The device shall support clearing of all faults from memory through the input specified in `UI_24`.
+1. `SYS_DIAG_09`: (FUTURE) The device shall support timestamping faults.
