@@ -35,3 +35,32 @@ Reference [SystemRequirements.md](../../SystemArchitecture/SystemRequirements.md
 1. `HRD_15`: When driving an infinite impedance, the device's output signal shall have a rise and fall time of no more than 2µs collectively.
    - _Rationale_: At 5kHz, the period is 200µs. I would like no more than 1% of that to be a rise and a fall time. In addition, with a Minimum HPT of 10µs, as specified in `SYS_FUNC_01D`, I would like at least 80% of the signals' HIGH pulse to be at the upper voltage level.
 1. `HRD_16`: The device shall have a 100Ω ± 10% output impedance from 0Hz up to the Maximum Frequency specified in `SYS_FUNC_01C`.
+1. `HRD_17`: The device must be able to operate in typical indoor office conditions:   
+   a. `HRD_17A`: 10°C to 50°C ambient temperature   
+   b. `HRD_17B`: 30% to 60% relative humidity
+
+## Physical I/O
+### Inputs
+1. `AIN_SETPOT`: Analog input for the SetPot
+1. `AIN_SCREEN_KNOB`: Analog input for the screen knob
+1. `DIN_SETPOINT_MODE`: Digital input to set the setpoint mode
+1. `DIN_VOLT_SET_MODE`: Digital input to set the voltage setpoint mode
+1. `DIN_COARSENESS_SW`: Digital input to set the coarseness of the SetPot
+1. `DIN_OUT_EN`: Digital input to enable/disable the output
+1. `DIAG_FRQ_OUT_AIN`: Diagnostic analog input to independently measure the output signal and confirm that it is within spec
+1. `DIAG_FRQ_OUT_DIN`: Diagnostic digital input to independently measure the output signal and confirm that it is within spec (to be used as a PWM input)
+1. `DIAG_FRQ_OUT_CURRENT`: Diagnostic analog input to measure the output current and detect overcurrents
+1. `DIAG_DIN_UI_LED_FRQ`: Diagnostic digital input for the LED that indicates frequency is the active setpoint mode
+1. `DIAG_DIN_UI_LED_HPT`: Diagnostic digital input for the LED that indicates high pulse time is the active setpoint mode
+1. `DIAG_DIN_OUT_EN`: Diagnostic digital input for the green LED that indicates the output is active
+1. `DIAG_DIN_LED_AMBER`: Diagnostic digital input for the amber LED that indicates a mild fault is active
+1. `DIAG_DIN_LED_RED`: Diagnostic digital input for the red LED that indicates a catastrophic fault is active
+### Outputs
+1. `FRQ_OUT`: Digital output that represents the square wave output
+1. `UI_SETPOT_LED_FRQ`: Digital output for the UI LED that represents frequency setpoint mode
+1. `UI_SETPOT_LED_HPT`: Digital output for the UI LED that represents HPT setpoint mode
+1. `DIAG_LED_AMBER`: Digital output for the amber LED
+1. `DIAG_LED_RED`: Digital output for the red diagnostic LED
+1. `LED_OUT_EN`: Digital output for the green LED that indicates the output is enabled and active
+1. `UPPER_VOLTAGE_SETPOINT`: Digital output to PWM the upper voltage setpoint
+1. `LOWER_VOLTAGE_SETPOINT`: Digital output to PWM the lower voltage setpoint

@@ -78,30 +78,8 @@ This particular document is the System Requirements Document, where top-level sy
 1. `UI_22`: (FUTURE) The device shall support a sweep for each of frequency and HPT.  
 1. `UI_23`: There shall be a green LED to indicate the output is enabled.
 1. `UI_24`: All recorded faults in memory shall be cleared through 5 presses of the setpoint mode button.
-
-## Physical I/O
-### Inputs
-1. `AIN_SETPOT`: Analog input for the SetPot
-1. `AIN_SCREEN_KNOB`: Analog input for the screen knob
-1. `DIN_SETPOINT_MODE`: Digital input to set the setpoint mode
-1. `DIN_VOLT_SET_MODE`: Digital input to set the voltage setpoint mode
-1. `DIN_COARSENESS_SW`: Digital input to set the coarseness of the SetPot
-1. `DIN_OUT_EN`: Digital input to enable/disable the output
-1. `DIAG_FRQ_OUT_AIN`: Diagnostic analog input to independently measure the output signal and confirm that it is within spec
-1. `DIAG_FRQ_OUT_DIN`: Diagnostic digital input to independently measure the output signal and confirm that it is within spec (to be used as a PWM input)
-1. `DIAG_FRQ_OUT_CURRENT`: Diagnostic analog input to measure the output current and detect overcurrents
-1. `DIAG_DIN_UI_LED_FRQ`: Diagnostic digital input for the LED that indicates frequency is the active setpoint mode
-1. `DIAG_DIN_UI_LED_HPT`: Diagnostic digital input for the LED that indicates high pulse time is the active setpoint mode
-1. `DIAG_DIN_OUT_EN`: Diagnostic digital input for the green LED that indicates the output is active
-1. `DIAG_DIN_LED_AMBER`: Diagnostic digital input for the amber LED that indicates a mild fault is active
-1. `DIAG_DIN_LED_RED`: Diagnostic digital input for the red LED that indicates a catastrophic fault is active
-### Outputs
-1. `FRQ_OUT`: Digital output that represents the square wave output
-1. `UI_SETPOT_LED_FRQ`: Digital output for the UI LED that represents frequency setpoint mode
-1. `UI_SETPOT_LED_HPT`: Digital output for the UI LED that represents HPT setpoint mode
-1. `DIAG_LED_AMBER`: Digital output for the amber LED
-1. `DIAG_LED_RED`: Digital output for the red diagnostic LED
-1. `LED_OUT_EN`: Digital output for the green LED that indicates the output is enabled and active
+1. `UI_25`: The screen shall be visible during normal office indoor lighting conditions.
+1. `UI_26`: The screen shall be visible from a 120° viewing angle from all sides.
 
 ## Functional Requirements
 1. `SYS_FUNC_01`: The device shall output a square wave signal.  
@@ -175,6 +153,30 @@ Every diagnostic fault has a name, a description, severity level, an associated 
    a. Description: The output square wave signal's frequency is zero (it is DC) when the user has specified a non-zero frequency  
    b. Associated Diagnostic Check: `SYS_DIAG_04A`  
    c. Context Values: None  
+1. `HPT_LOW`:  
+   a. Description: The output square wave signal's HPT is lower than the acceptable tolerance  
+   b. Associated Diagnostic Check: `SYS_DIAG_04C`  
+   c. Context Values:  
+      - measured HPT  
+      - setpoint HPT  
+1. `HPT_HIGH`  
+   a. Description: The output square wave signal's HPT is higher than the acceptable tolerance  
+   b. Associated Diagnostic Check: `SYS_DIAG_04C`  
+   c. Context Values:  
+      - measured HPT  
+      - setpoint HPT  
+1. `UPPER_VOLTAGE_OUT_OF_SPEC`:  
+   a. Description: The output square wave signal's HIGH voltage level is outside acceptable tolerance  
+   b. Associated Diagnostic Check: `SYS_DIAG_04B`  
+   c. Context Values:  
+      - measured HIGH voltage  
+      - setpoint HIGH voltage  
+1. `LOWER_VOLTAGE_OUT_OF_SPEC`:  
+   a. Description: The output square wave signal's LOW voltage level is outside acceptable tolerance  
+   b. Associated Diagnostic Check: `SYS_DIAG_04B`  
+   c. Context Values:  
+      - measured LOW voltage  
+      - setpoint LOW voltage  
 1. `OVERCURRENT`:  
    a. Description: The output current is above device limitations  
    b. Associated Diagnostic Check: `SYS_DIAG_05`  
@@ -193,6 +195,7 @@ Every diagnostic fault has a name, a description, severity level, an associated 
 1. `SYS_DIAG_04`: The device shall monitor its square wave output and confirm that the waveform meets the following specs:  
    a. `SYS_DIAG_04A`: Frequency is within ± 1%  
    b. `SYS_DIAG_04B`: Voltage levels are within ± 2%  
+   b. `SYS_DIAG_04C`: HPT is within ± 0.5µs  
 1. `SYS_DIAG_05`: The device shall monitor its output current and if the current is ≥ 95% of the current specified in `SYS_FUNC_07` for ≥ 500ms, the device shall:   
    a. `SYS_DIAG_05A`: Record a catastrophic fault  
    b. `SYS_DIAG_05B`: Disable its output  
