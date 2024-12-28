@@ -105,15 +105,15 @@ This particular document is the System Requirements Document, where top-level sy
 
 ## Functional Requirements
 1. `SYS_FUNC_01`: The device shall output a square wave signal.  
-   a. `SYS_FUNC_01A`: The output waveform's HIGH voltage level shall be settable from 0.1V to a Max Voltage of 5.0V.  
-   b. `SYS_FUNC_01B`: The output waveform's LOW voltage level shall be settable from 0.0V to 0.1V below Max Voltage.  
-   c. `SYS_FUNC_01C`: The output waveform's frequency shall be settable from 0Hz to 5kHz.  
-   d. `SYS_FUNC_01D`: The output waveform's high pulse time shall be settable from 0µs to 200µs.  
+   a. `SYS_FUNC_01A`: The output waveform's HIGH voltage level shall be settable from 0.1V to a **Max Voltage** of 5.0V.  
+   b. `SYS_FUNC_01B`: The output waveform's LOW voltage level shall be settable from a **Minimum Voltage** of 0.0V to 0.1V below Maximum Voltage.  
+   c. `SYS_FUNC_01C`: The output waveform's frequency shall be settable from **Minimum Frequency** of 0Hz to a **Maximum Frequency** of 5kHz.  
+   d. `SYS_FUNC_01D`: The output waveform's high pulse time shall be settable from a **Minimum HPT** of 10µs to a **Maximum HPT** of 200µs.  
    e. `SYS_FUNC_01E`: The output waveform's frequency shall be within ±1% of the set frequency.  
    f. `SYS_FUNC_01F`: The output waveform's HPT shall be within ±0.5µs of the set HPT.  
    g. `SYS_FUNC_01G`: The output waveform's two voltage levels shall be within ±2% of the set voltage levels.  
 1. `SYS_FUNC_02`: Only one Setpoint Mode shall be active at a time.
-1. `SYS_FUNC_03`: The device shall last ≥ 2 hours driving a 1kΩ load.
+1. `SYS_FUNC_03`: The device shall last ≥ 2 hours driving a 1kΩ load across the output frequency range specified in `SYS_FUNC_01C`.
 1. `SYS_FUNC_04`: The present session (except for what is mentioned in `SYS_FUNC_05`) shall be saved and reloaded at the start of the next session. Included in the session are:  
    a. HIGH and LOW voltage levels (1)  
    b. Frequency setpoint (2)  

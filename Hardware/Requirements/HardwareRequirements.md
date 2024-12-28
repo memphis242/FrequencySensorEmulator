@@ -32,3 +32,6 @@ Reference [SystemRequirements.md](../../SystemArchitecture/SystemRequirements.md
 1. `HRD_12`: The SetPot shall have a metal knurled knob.
 1. `HRD_13`: The SetPot shall a diameter ≥ 60% of the height of the display.
 1. `HRD_14`: The enable switch shall be a slide switch.
+1. `HRD_15`: When driving an infinite impedance, the device's output signal shall have a rise and fall time of no more than 2µs collectively.
+   - _Rationale_: At 5kHz, the period is 200µs. I would like no more than 1% of that to be a rise and a fall time. In addition, with a Minimum HPT of 10µs, as specified in `SYS_FUNC_01D`, I would like at least 80% of the signals' HIGH pulse to be at the upper voltage level.
+1. `HRD_16`: The device shall have a 100Ω ± 10% output impedance from 0Hz up to the Maximum Frequency specified in `SYS_FUNC_01C`.
