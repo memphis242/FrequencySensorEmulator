@@ -57,3 +57,5 @@ Release/
 
 # KiCad
 *backups/
+*autosave*
+*auto_save*
