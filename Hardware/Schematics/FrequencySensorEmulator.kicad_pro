@@ -386,6 +386,14 @@
     [
       "76d3015e-4ea5-4582-8e1b-ccd12abc8f3a",
       "Root"
+    ],
+    [
+      "a32bd9ee-eab3-4067-8dc5-1bf814adc71d",
+      "Display"
+    ],
+    [
+      "aaa856cc-4e4e-4e99-982f-91ae7652e242",
+      "User Inputs"
     ]
   ],
   "text_variables": {}
