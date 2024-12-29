@@ -46,7 +46,7 @@ Reference [SystemRequirements.md](../../SystemArchitecture/SystemRequirements.md
 1. `DIN_SETPOINT_MODE`: Digital input to set the setpoint mode
 1. `DIN_VOLT_SET_MODE`: Digital input to set the voltage setpoint mode
 1. `DIN_COARSENESS_SW`: Digital input to set the coarseness of the SetPot
-1. `DIN_OUT_EN`: Digital input to enable/disable the output
+1. `DIN_OUT_EN_SW`: Digital input switch to enable/disable the output
 1. `DIAG_FRQ_OUT_AIN`: Diagnostic analog input to independently measure the output signal and confirm that it is within spec
 1. `DIAG_FRQ_OUT_DIN`: Diagnostic digital input to independently measure the output signal and confirm that it is within spec (to be used as a PWM input)
 1. `DIAG_FRQ_OUT_CURRENT`: Diagnostic analog input to measure the output current and detect overcurrents
