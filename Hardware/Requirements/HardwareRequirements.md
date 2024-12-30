@@ -49,7 +49,7 @@ Reference [SystemRequirements.md](../../SystemArchitecture/SystemRequirements.md
 1. `DIN_OUT_EN_SW`: Digital input switch to enable/disable the output
 1. `DIAG_FRQ_OUT_AIN`: Diagnostic analog input to independently measure the output signal and confirm that it is within spec
 1. `DIAG_FRQ_OUT_DIN`: Diagnostic digital input to independently measure the output signal and confirm that it is within spec (to be used as a PWM input)
-1. `DIAG_FRQ_OUT_CURRENT`: Diagnostic analog input to measure the output current and detect overcurrents
+1. `DIAG_FRQ_OUT_CURRENT_AIN`: Diagnostic analog input to measure the output current and detect overcurrents
 1. `DIAG_DIN_UI_LED_FRQ`: Diagnostic digital input for the LED that indicates frequency is the active setpoint mode
 1. `DIAG_DIN_UI_LED_HPT`: Diagnostic digital input for the LED that indicates high pulse time is the active setpoint mode
 1. `DIAG_DIN_OUT_EN`: Diagnostic digital input for the green LED that indicates the output is active
