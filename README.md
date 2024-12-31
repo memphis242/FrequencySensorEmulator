@@ -39,6 +39,11 @@ TODO
 # Repository Walk-Through
 TODO
 
+### KiCad Library Files
+When viewing the KiCad files, you'll need to straighten out some custom symbol/footprint references I made weren't part of the libraries that came with my KiCad installation (as of 12/30/2024). My shared library files can be found here: [memphis242/KiCad-Libraries](https://github.com/memphis242/KiCad-Libraries)
+
+TODO: Utilize relative references for the custom library components.
+
 # Development Tech Used
 ### Hardware
 TODO
