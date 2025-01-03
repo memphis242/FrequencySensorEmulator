@@ -33,6 +33,7 @@ This particular document is the System Requirements Document, where top-level sy
    b. Set Lower Voltage Level
    c. Voltage Level Setpoint Off
 1. **Voltage Setpoint Mode Button**: The button that cycles through the voltage setpoint modes
+1. **Idle**: The device is on but its output is disabled
 
 ## User Interface
 ### Requirements
@@ -92,21 +93,22 @@ This particular document is the System Requirements Document, where top-level sy
    g. `SYS_FUNC_01G`: The output waveform's two voltage levels shall be within ±2% of the set voltage levels.  
 1. `SYS_FUNC_02`: Only one Setpoint Mode shall be active at a time.
 1. `SYS_FUNC_03`: The device shall last ≥ 2 hours driving a 1kΩ load across the output frequency range specified in `SYS_FUNC_01C`.
-1. `SYS_FUNC_04`: The present session (except for what is mentioned in `SYS_FUNC_05`) shall be saved and reloaded at the start of the next session. Included in the session are:  
+1. `SYS_FUNC_04`: The device shall last ≥ 1 week idling.
+1. `SYS_FUNC_05`: The present session (except for what is mentioned in `SYS_FUNC_05`) shall be saved and reloaded at the start of the next session. Included in the session are:  
    a. HIGH and LOW voltage levels (1)  
    b. Frequency setpoint (2)  
    c. HPT setpoint (3)  
    d. Diagnostic faults (4)  
    e. Coarseness setting (5)  
    f. Setpoint mode (6)  
-1. `SYS_FUNC_05`: The following session parameters/configurations shall be excluded from the session save specified in `SYS_FUNC_04`:  
+1. `SYS_FUNC_06`: The following session parameters/configurations shall be excluded from the session save specified in `SYS_FUNC_04`:  
    a. Output enabled  
    b. Active screen  
-1. `SYS_FUNC_06`: At startup, the following shall be true:  
+1. `SYS_FUNC_07`: At startup, the following shall be true:  
    a. Output is disabled  
    b. Active screen is the main screen  
-1. `SYS_FUNC_07`: The device's output current shall be ≤ 50mA.
-1. `SYS_FUNC_08`: The device shall keep track of time using a real-time clock, and support the user setting a time.
+1. `SYS_FUNC_08`: The device's output current shall be ≤ 50mA.
+1. `SYS_FUNC_09`: The device shall keep track of time using a real-time clock, and support the user setting a time.
 
 ## Diagnostics
 ### Diagnostic Faults

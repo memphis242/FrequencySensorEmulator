@@ -5,10 +5,13 @@ This requirements document specified hardware details that are a layer lower tha
 - Device enclosure requirements
 
 ## Terminology
-Reference [SystemRequirements.md](../../SystemArchitecture/SystemRequirements.md) for more terminology.
-1. **Height**: Looking at the face of the device with the screen, the height is the vertical dimension.
-1. **Width**: Looking at the face of the device with the screen, the width is the horizontal dimension.
-1. **Depth**: How high the device comes off a flat surface if the face of the device with the screen is facing up.
+Reference [SystemRequirements.md](../../SystemArchitecture/SystemRequirements.md) for more terminology
+1. **Height**: Looking at the face of the device with the screen, the height is the vertical dimension
+1. **Width**: Looking at the face of the device with the screen, the width is the horizontal dimension
+1. **Depth**: How high the device comes off a flat surface if the face of the device with the screen is facing up
+1. **Max Frequency**: Maximum Frequency specified in `SYS_FUNC_01C`
+1. **Rated Frequency Range**: 0Hz to the Max Frequency
+1. **Unwanted Signal Overlay**: Any signal on top of the ideal square waveform that is undersired (noise, ripple)
 
 ## Requirements
 1. `HRD_01`: The device shall be within ± 10% of these dimensions:
@@ -20,7 +23,7 @@ Reference [SystemRequirements.md](../../SystemArchitecture/SystemRequirements.md
    b. a 0.1" pin header
    c. a 0.1" socket header
    d. two banana plug receptacles
-1. `HRD_03`: The device shall be powered by a standard ANSI 1604A 9V alkaline battery.
+1. `HRD_03`: The device shall be powered by a single standard ANSI 1604A (IEC 6LR61) 9V alkaline battery.
 1. `HRD_04`: (FUTURE) The device shall support being powered via USB C.
 1. `HRD_05`: The device shall have a 3V backup 2032 battery to support graceful shutdown.
 1. `HRD_06`: The display shall have 10mm bevels above and below it.
@@ -34,10 +37,11 @@ Reference [SystemRequirements.md](../../SystemArchitecture/SystemRequirements.md
 1. `HRD_14`: The enable switch shall be a slide switch.
 1. `HRD_15`: When driving an infinite impedance, the device's output signal shall have a rise and fall time of no more than 2µs collectively.
    - _Rationale_: At 5kHz, the period is 200µs. I would like no more than 1% of that to be a rise and a fall time. In addition, with a Minimum HPT of 10µs, as specified in `SYS_FUNC_01D`, I would like at least 80% of the signals' HIGH pulse to be at the upper voltage level.
-1. `HRD_16`: The device shall have a 100Ω ± 10% output impedance from 0Hz up to the Maximum Frequency specified in `SYS_FUNC_01C`.
+1. `HRD_16`: The device shall have a 100Ω ± 10% output impedance throughout its rated frequency range.
 1. `HRD_17`: The device must be able to operate in typical indoor office conditions:   
    a. `HRD_17A`: 10°C to 50°C ambient temperature   
    b. `HRD_17B`: 30% to 60% relative humidity
+1. `HRD_18`: The output signal shall have ≤ ±1mVrms of **unwanted signal overlay** on top of the base square waveform across its rated frequency range and output load range.
 
 ## Physical I/O
 ### Inputs
