@@ -37,7 +37,7 @@ TODO
 TODO
 
 # Repository Walk-Through
-TODO
+Each folder has 
 
 ### KiCad Library Files
 When viewing the KiCad files, you'll need to straighten out some custom symbol/footprint references I made which were not part of the libraries that came with my KiCad installation (as of 12/30/2024). My shared library files can be found here: [memphis242/KiCad-Libraries](https://github.com/memphis242/KiCad-Libraries)
