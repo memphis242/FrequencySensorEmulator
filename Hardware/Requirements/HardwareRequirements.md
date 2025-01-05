@@ -41,7 +41,7 @@ Reference [SystemRequirements.md](../../SystemArchitecture/SystemRequirements.md
 1. `HRD_17`: The device must be able to operate in typical indoor office conditions:   
    a. `HRD_17A`: 10°C to 50°C ambient temperature   
    b. `HRD_17B`: 30% to 60% relative humidity
-1. `HRD_18`: The output signal shall have ≤ ±1mVrms of **unwanted signal overlay** on top of the base square waveform across its rated frequency range and output load range.
+1. `HRD_18`: The output signal shall have ≤ ±1mV of **unwanted signal overlay** on top of the base square waveform across its rated frequency range and output load range.
 
 ## Physical I/O
 ### Inputs
