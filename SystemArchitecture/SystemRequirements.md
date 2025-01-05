@@ -34,6 +34,7 @@ This particular document is the System Requirements Document, where top-level sy
    c. Voltage Level Setpoint Off
 1. **Voltage Setpoint Mode Button**: The button that cycles through the voltage setpoint modes
 1. **Idle**: The device is on but its output is disabled
+1. **Frequency Range**: The range of frequencies set by the minimum frequency and maximum frequency of `SYS_FUNC_01C` with resolution set by `UI_17A`.   
 
 ## User Interface
 ### Requirements
@@ -86,8 +87,8 @@ This particular document is the System Requirements Document, where top-level sy
 1. `SYS_FUNC_01`: The device shall output a square wave signal.  
    a. `SYS_FUNC_01A`: The output waveform's HIGH voltage level shall be settable from 0.1V to a **Max Voltage** of 5.0V.  
    b. `SYS_FUNC_01B`: The output waveform's LOW voltage level shall be settable from a **Minimum Voltage** of 0.0V to 0.1V below Maximum Voltage.  
-   c. `SYS_FUNC_01C`: The output waveform's frequency shall be settable from **Minimum Frequency** of 0Hz to a **Maximum Frequency** of 5kHz.  
-   d. `SYS_FUNC_01D`: The output waveform's high pulse time shall be settable from a **Minimum HPT** of 10µs to a **Maximum HPT** of 200µs.  
+   c. `SYS_FUNC_01C`: The output waveform's frequency shall be settable from **Minimum Frequency** of 0Hz to a **Maximum Frequency** of 12kHz.  
+   d. `SYS_FUNC_01D`: The output waveform's high pulse time shall be settable from a **Minimum HPT** of 10µs to a **Maximum HPT** of min(200µs, period of frequency - 1µs).  
    e. `SYS_FUNC_01E`: The output waveform's frequency shall be within ±1% of the set frequency.  
    f. `SYS_FUNC_01F`: The output waveform's HPT shall be within ±0.5µs of the set HPT.  
    g. `SYS_FUNC_01G`: The output waveform's two voltage levels shall be within ±2% of the set voltage levels.  
