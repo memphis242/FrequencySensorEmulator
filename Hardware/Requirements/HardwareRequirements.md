@@ -12,6 +12,8 @@ Reference [SystemRequirements.md](../../SystemArchitecture/SystemRequirements.md
 1. **Max Frequency**: Maximum Frequency specified in `SYS_FUNC_01C`
 1. **Rated Frequency Range**: 0Hz to the Max Frequency
 1. **Unwanted Signal Overlay**: Any signal on top of the ideal square waveform that is undersired (noise, ripple)
+1. **Device Efficiency**: The ratio between the power to a 100Ω load and the power supplied by the device's battery
+1. **Worst-Case Device Efficiency**: The device efficiency under conditions that cause maximum losses
 
 ## Requirements
 1. `HRD_01`: The device shall be within ± 10% of these dimensions:
@@ -19,10 +21,10 @@ Reference [SystemRequirements.md](../../SystemArchitecture/SystemRequirements.md
    b. Width: 100mm  
    c. Depth: 30mm  
 1. `HRD_02`: To fulfill `UI_04`, the following shall be the output ports for this device:
-   a. a BNC port (receptable)
-   b. a 0.1" pin header
-   c. a 0.1" socket header
-   d. two banana plug receptacles
+   a. a BNC port (receptable) where the outer shell is connected to ground and the inner line is connected to the output signal
+   b. a 0.1" pin header pair (ground + signal)
+   c. a 0.1" socket header pair (ground + signal)
+   d. two banana plug receptacles (ground + signal)
 1. `HRD_03`: The device shall be powered by a single standard ANSI 1604A (IEC 6LR61) 9V alkaline battery.
 1. `HRD_04`: (FUTURE) The device shall support being powered via USB C.
 1. `HRD_05`: The device shall have a 3V backup 2032 battery to support graceful shutdown.
@@ -42,6 +44,7 @@ Reference [SystemRequirements.md](../../SystemArchitecture/SystemRequirements.md
    a. `HRD_17A`: 10°C to 50°C ambient temperature   
    b. `HRD_17B`: 30% to 60% relative humidity
 1. `HRD_18`: The output signal shall have ≤ ±1mV of **unwanted signal overlay** on top of the base square waveform across its rated frequency range and output load range.
+1. `HRD_19`: The worst-case device efficiency shall be ≥ 80%.
 
 ## Physical I/O
 ### Inputs
