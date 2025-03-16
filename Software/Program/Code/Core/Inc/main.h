@@ -31,21 +31,59 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdbool.h>
+#include <stdint.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+
+enum Direction_E
+{
+   DIRECTION_FORWARD_MIN,
+   DIRECTION_FORWARD_NOMINAL,
+   DIRECTION_FORWARD_MAX,
+   DIRECTION_REVERSE_MIN,
+   DIRECTION_REVERSE_NOMINAL,
+   DIRECTION_REVERSE_MAX,
+   DIRECTION_ERROR,
+   DIRECTION_NOT_AVAILABLE
+};
+
+typedef float    Hz_T;
+typedef uint32_t us_T;
 
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 
+#define DIRECTION_FORWARD_HIGH_PULSE_TIME_NOMINAL     45000.0f // ns
+#define DIRECTION_FORWARD_HIGH_PULSE_TIME_TOLERANCE    7000.0f
+#define DIRECTION_REVERSE_HIGH_PULSE_TIME_NOMINAL     90000.0f
+#define DIRECTION_REVERSE_HIGH_PULSE_TIME_TOLERANCE   14000.0f
+#define DIRECTION_ERROR_HIGH_PULSE_TIME               200000.0f
+
+#define MIN_FREQUENCY_TO_TEST                         3.5   // Hz
+#define MAX_FREQUENCY_TO_TEST                         2660.0
+
+#define MAX_ADC_COUNT(adc_handle)                     __HAL_ADC_DIGITAL_SCALE((adc_handle)->Init.Resolution)
+#define MIN_ADC_COUNT                                 0u
+
+#define TIMER_CLOCK_RATE_HZ                           64000000 // TODO: Use an actual generated config for this; just need to find it. Candidate macro: HSI_VALUE of Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_ll_rcc.h
+#define NANOSECONDS_PER_TIMER_COUNT                   ( (float)( 1.0e9f / (float)TIMER_CLOCK_RATE_HZ ) )
+#define TIMER_COUNTS_PER_NANOSECOND                   ( 1.0f / NANOSECONDS_PER_TIMER_COUNT )
+
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
+
+#ifdef UNIT_TEST
+   #define STATIC
+#else
+   #define STATIC static
+#endif
 
 /* USER CODE END EM */
 
@@ -59,8 +97,11 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
+#define B1_EXTI_IRQn EXTI15_10_IRQn
 #define LD1_Pin GPIO_PIN_0
 #define LD1_GPIO_Port GPIOB
+#define Frq_Out_Pin GPIO_PIN_10
+#define Frq_Out_GPIO_Port GPIOE
 #define LD3_Pin GPIO_PIN_14
 #define LD3_GPIO_Port GPIOB
 #define STLINK_RX_Pin GPIO_PIN_8
@@ -79,6 +120,10 @@ void Error_Handler(void);
 #define LD2_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
+#define BLUE_BUTTON_PIN   B1_Pin
+#define BLUE_BUTTON_PORT  B1_GPIO_Port
+#define FRQ_OUT_PIN       Frq_Out_Pin
+#define FRQ_OUT_PORT      Frq_Out_GPIO_Port
 
 /* USER CODE END Private defines */
 

@@ -1,0 +1,589 @@
+/* USER CODE BEGIN Header */
+/**
+  ******************************************************************************
+  * @file           : main.c
+  * @brief          : Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2024 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
+/* USER CODE END Header */
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
+
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+
+/* USER CODE END Includes */
+
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+#define PUSH_BUTTON_DEBOUNCE_WAIT_TIME              50  // Amount of time _after_ an edge (on the digital input connected to the push button) to ignore any level changes
+// Value to load into the ARR (Auto Reload Register) at startup:
+#define AUTO_RELOD_REGISTER_INITIAL_VALUE           ( (uint32_t) ((DIRECTION_FORWARD_HIGH_PULSE_TIME_NOMINAL - DIRECTION_FORWARD_HIGH_PULSE_TIME_TOLERANCE) * \
+                                                                   TIMER_COUNTS_PER_NANOSECOND) )
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc3;
+
+TIM_HandleTypeDef htim2;
+
+/* USER CODE BEGIN PV */
+
+/* Private variables ---------------------------------------------------------*/
+static volatile bool OnHighPulse;
+static volatile bool ButtonPressed;
+static volatile bool ADC_ConversionComplete;
+static uint32_t AutoReloadRegister_Reload_Values[2] = { AUTO_RELOD_REGISTER_INITIAL_VALUE, AUTO_RELOD_REGISTER_INITIAL_VALUE };
+static bool AutoReloadRegister_Reload_Value_Idx;  // Even though this is an index, and would typically be an integer, the array being
+                                                  // indexed into is guaranteed here to be of size 2, so a boolean suffices and works
+                                                  // for me in multiple ways. For example, a boolean sanitizer check would also work to
+                                                  // bounds-check for me with this.
+
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_TIM2_Init(void);
+static void MX_ADC3_Init(void);
+/* USER CODE BEGIN PFP */
+
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
+
+/* Algorithm Explanation
+ * The algorithm used to produce the square wave output with variable high pulse time is as follows:
+ *    - On every timer interrupt, the frequency output pin is toggled and the Auto Reload Register (ARR)
+ *      is updated with the next value of the AutoReloadRegister_Reload_Values[] array.
+ * The ARR value represents when the next timer interrupt will occur. So, by setting this register to the count threshold
+ * that corresponds to the high pulse time and then the low pulse time, we can easily control the square wave's high
+ * and low widths.
+ * The AutoReloadRegister_Reload_Values[] array represents the high pulse time and low pulse times. It follows
+ * that the sum of these two values represents the period of the signal.
+ */
+void HAL_TIM_PeriodElapsedCallback( TIM_HandleTypeDef * timer_handle )
+{
+   if ( timer_handle == &htim2 )
+   {
+      HAL_GPIO_TogglePin( FRQ_OUT_PORT, FRQ_OUT_PIN );
+      
+      // Load next ARR value into ARR
+      __HAL_TIM_SET_AUTORELOAD( &htim2, AutoReloadRegister_Reload_Values[ AutoReloadRegister_Reload_Value_Idx ] );
+      
+      // Update index for next run
+      AutoReloadRegister_Reload_Value_Idx != AutoReloadRegister_Reload_Value_Idx;
+   }
+}
+
+/**
+  * @brief  EXTI line detection callback.
+  * @param  GPIO_Pin: Specifies the port pin connected to corresponding EXTI line.
+  * @retval None
+  */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+   if ( GPIO_Pin == B1_Pin )
+   {
+      ButtonPressed = true;
+   }
+}
+
+//void HAL_ADC_ConvCpltCallback( ADC_HandleTypeDef * adc_handle )
+//{
+////   // Check if interrupt came from an end-of-conversion (EOC) event...
+////   if( __HAL_ADC_GET_FLAG(adc_handle, ADC_FLAG_EOC) )
+////   {
+////      /* NOTE-WORTHY ADC HAL API:
+////       *    __HAL_ADC_CALC_VREFANALOG_VOLTAGE
+////       *    __HAL_ADC_CALC_DATA_TO_VOLTAGE
+////       *    
+////       */
+////      ADC_ConversionComplete = true;
+////      // No need to clear any ADC registers because that is handled in IRQ routine that calls this callback.
+////   }
+//   ADC_ConversionComplete = true;
+//}
+
+
+/*** Private Helper Functions ***/
+STATIC Hz_T Interpolate_ADCCount_To_Frq( uint16_t adc_count );
+
+/* USER CODE END 0 */
+
+/**
+  * @brief  The application entry point.
+  * @retval int
+  */
+int main(void)
+{
+
+  /* USER CODE BEGIN 1 */
+
+  /* USER CODE END 1 */
+
+  /* MCU Configuration--------------------------------------------------------*/
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
+
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_TIM2_Init();
+  MX_ADC3_Init();
+  /* USER CODE BEGIN 2 */
+
+   HAL_TIM_Base_Start_IT(&htim2);
+
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+   while (1)
+   {
+      static enum Direction_E Direction = DIRECTION_NOT_AVAILABLE;
+      static bool UpdateOutput = false;
+      static bool ADC_ConversionInProgress = false;
+      static uint16_t Previous_ADCValue = 0u;
+      static float Frequency = 0.0f;
+
+      /*** HANDLE FRQ_OUT GPIO ***/
+      
+
+      /*** HANDLE USER INPUT FOR HIGH-PULSE TIME ***/
+      // Check if button was pressed...
+      if ( ButtonPressed == true )
+      {
+         ButtonPressed = false;
+         HAL_Delay( PUSH_BUTTON_DEBOUNCE_WAIT_TIME );  // TODO: Handle debounces without a delay... --> Suggestion: Use another timer and a flag in the ISR that prevents immediate setting of flag...
+
+         // Toggle high-pulse time amounts
+         Direction = (enum Direction_E) ( ( (int)Direction + 1 ) % ( (int)DIRECTION_ERROR + 1 ) );
+         UpdateOutput = true;
+      }
+
+      /*** HANDLE USER INPUT FOR FREQUENCY ***/
+      // Read ADC value and update timer auto-reload register (ARR) value to set new period
+      uint32_t adc_reading = 0;
+
+      // Start ADC conversion if one is not started already...
+      if ( ADC_ConversionInProgress == false )
+      {
+         (void)HAL_ADC_Start( &hadc3 );   // TODO: Use status return value
+         ADC_ConversionInProgress = true;
+         HAL_ADC_PollForConversion(&hadc3, 80);
+      //}
+      //else if ( ADC_ConversionComplete == true )
+      //{
+         ADC_ConversionComplete = false;
+         ADC_ConversionInProgress = false;
+         adc_reading = HAL_ADC_GetValue( &hadc3 );
+         if ( adc_reading != Previous_ADCValue )
+         {
+            UpdateOutput = true;
+            Previous_ADCValue = adc_reading;
+         }
+      }
+
+      /*** HANDLE FREQUENCY OUTPUT ***/
+      if ( UpdateOutput == true )
+      {
+         uint32_t high_pulse_time_arr_value;
+         float period_us;
+         uint32_t period_in_timer_counts;
+         
+         UpdateOutput = false;
+
+         // Convert this ADC reading into a frequency...
+         Frequency = Interpolate_ADCCount_To_Frq( adc_reading );
+         period_us = 1.0e9 / (float)Frequency;
+         period_in_timer_counts = (uint32_t) ( period_us * TIMER_COUNTS_PER_NANOSECOND );
+
+         // Figure out new high-pulse time
+         switch( Direction )
+         {
+            case DIRECTION_FORWARD_MIN:
+               high_pulse_time_arr_value = (uint32_t) ( ( DIRECTION_FORWARD_HIGH_PULSE_TIME_NOMINAL - DIRECTION_FORWARD_HIGH_PULSE_TIME_TOLERANCE ) * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+
+            case DIRECTION_FORWARD_NOMINAL:
+               high_pulse_time_arr_value = (uint32_t) ( DIRECTION_FORWARD_HIGH_PULSE_TIME_NOMINAL * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+
+            case DIRECTION_FORWARD_MAX:
+               high_pulse_time_arr_value = (uint32_t) ( ( DIRECTION_FORWARD_HIGH_PULSE_TIME_NOMINAL + DIRECTION_FORWARD_HIGH_PULSE_TIME_TOLERANCE ) * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+
+            case DIRECTION_REVERSE_MIN:
+               high_pulse_time_arr_value = (uint32_t) ( ( DIRECTION_REVERSE_HIGH_PULSE_TIME_NOMINAL - DIRECTION_REVERSE_HIGH_PULSE_TIME_TOLERANCE ) * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+
+            case DIRECTION_REVERSE_NOMINAL:
+               high_pulse_time_arr_value = (uint32_t) ( DIRECTION_REVERSE_HIGH_PULSE_TIME_NOMINAL * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+
+            case DIRECTION_REVERSE_MAX:
+               high_pulse_time_arr_value = (uint32_t) ( ( DIRECTION_REVERSE_HIGH_PULSE_TIME_NOMINAL + DIRECTION_REVERSE_HIGH_PULSE_TIME_TOLERANCE ) * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+
+            case DIRECTION_ERROR:
+               high_pulse_time_arr_value = (uint32_t) ( DIRECTION_ERROR_HIGH_PULSE_TIME * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+
+            default:
+               high_pulse_time_arr_value = (uint32_t) ( DIRECTION_ERROR_HIGH_PULSE_TIME * TIMER_COUNTS_PER_NANOSECOND );
+               break;
+         }
+
+         // Update ARR reload array
+         // TODO: Need to update this table atomically!
+         AutoReloadRegister_Reload_Values[0] = high_pulse_time_arr_value;
+         AutoReloadRegister_Reload_Values[1] = ( period_in_timer_counts - high_pulse_time_arr_value );
+      }
+
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+   }
+  /* USER CODE END 3 */
+}
+
+/**
+  * @brief System Clock Configuration
+  * @retval None
+  */
+void SystemClock_Config(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+  /** Supply configuration update enable
+  */
+  HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
+
+  /** Configure the main internal regulator output voltage
+  */
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+
+  while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
+
+  /** Macro to configure the PLL clock source
+  */
+  __HAL_RCC_PLL_PLLSOURCE_CONFIG(RCC_PLLSOURCE_HSI);
+
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_DIV1;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2
+                              |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV1;
+  RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV1;
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief ADC3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC3_Init(void)
+{
+
+  /* USER CODE BEGIN ADC3_Init 0 */
+
+  /* USER CODE END ADC3_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC3_Init 1 */
+
+  /* USER CODE END ADC3_Init 1 */
+
+  /** Common config
+  */
+  hadc3.Instance = ADC3;
+  hadc3.Init.Resolution = ADC_RESOLUTION_16B;
+  hadc3.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc3.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc3.Init.LowPowerAutoWait = DISABLE;
+  hadc3.Init.ContinuousConvMode = DISABLE;
+  hadc3.Init.NbrOfConversion = 1;
+  hadc3.Init.DiscontinuousConvMode = DISABLE;
+  hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc3.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;
+  hadc3.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc3.Init.LeftBitShift = ADC_LEFTBITSHIFT_NONE;
+  hadc3.Init.OversamplingMode = DISABLE;
+  if (HAL_ADC_Init(&hadc3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  sConfig.OffsetSignedSaturation = DISABLE;
+  if (HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC3_Init 2 */
+
+  /* USER CODE END ADC3_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 0;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 10000;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+/* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOG_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, LD1_Pin|LD3_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, Frq_Out_Pin|LD2_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(USB_OTG_FS_PWR_EN_GPIO_Port, USB_OTG_FS_PWR_EN_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : B1_Pin */
+  GPIO_InitStruct.Pin = B1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PC1 PC4 PC5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_5;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PA1 PA2 PA7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : LD1_Pin LD3_Pin */
+  GPIO_InitStruct.Pin = LD1_Pin|LD3_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : Frq_Out_Pin LD2_Pin */
+  GPIO_InitStruct.Pin = Frq_Out_Pin|LD2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PB13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : STLINK_RX_Pin STLINK_TX_Pin */
+  GPIO_InitStruct.Pin = STLINK_RX_Pin|STLINK_TX_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF7_USART3;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : USB_OTG_FS_PWR_EN_Pin */
+  GPIO_InitStruct.Pin = USB_OTG_FS_PWR_EN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(USB_OTG_FS_PWR_EN_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : USB_OTG_FS_OVCR_Pin */
+  GPIO_InitStruct.Pin = USB_OTG_FS_OVCR_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(USB_OTG_FS_OVCR_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PA8 PA11 PA12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_11|GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF10_OTG1_FS;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
+/* USER CODE BEGIN MX_GPIO_Init_2 */
+/* USER CODE END MX_GPIO_Init_2 */
+}
+
+/* USER CODE BEGIN 4 */
+
+STATIC Hz_T Interpolate_ADCCount_To_Frq( uint16_t adc_count )
+{
+   return (Hz_T) ( ( (Hz_T)adc_count * (MAX_FREQUENCY_TO_TEST - MIN_FREQUENCY_TO_TEST) / ( MAX_ADC_COUNT(&hadc3) - MIN_ADC_COUNT ) ) ) + (Hz_T)MIN_FREQUENCY_TO_TEST;
+}
+
+/* USER CODE END 4 */
+
+/**
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
+void Error_Handler(void)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  }
+  /* USER CODE END Error_Handler_Debug */
+}
+
+#ifdef  USE_FULL_ASSERT
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
+void assert_failed(uint8_t *file, uint32_t line)
+{
+  /* USER CODE BEGIN 6 */
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* USER CODE END 6 */
+}
+#endif /* USE_FULL_ASSERT */
