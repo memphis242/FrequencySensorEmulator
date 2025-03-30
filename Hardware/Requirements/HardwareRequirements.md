@@ -126,4 +126,8 @@ To meet the above requirements, the following components have been selected.
    - DigiKey: [150-MCP47CMD21T-E/MFCT-ND](https://www.digikey.com/en/products/detail/microchip-technology/MCP47CMD21T-E-MF/16709763)
 
 ### Device Enclosure
-TODO
+3D model, material, and fabrication details coming soon...
+See the general sketch of the front face of the device below:   
+   
+![FSE Device Sketch drawio](https://github.com/user-attachments/assets/d2e239ff-ba75-486b-832b-5c3469d33ba1)
+
