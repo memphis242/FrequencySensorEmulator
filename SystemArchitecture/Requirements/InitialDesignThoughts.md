@@ -1,3 +1,6 @@
 # Initial Thoughts
-- This component needs to output a square wave signal of variable frequency and duty cycle.
-- I need to be able to set the output frequency between 3.5Hz and 2660Hz and vary the high-pulse time from 37us through 52us and 76us through 104us.
+1. Produce a **square wave** signal
+2. Adjustable frequencies between ≈3.5Hz to ≈2660Hz
+3. Selectable pulse width between the discrete set `[38, 45, 52, 76, 90, 104, 200]` us
+4. ≈0V min, ≈5V max
+5. Powered through USB from a laptop
