@@ -131,4 +131,8 @@ To meet the above requirements, the following components have been selected.
 Crystalfontz [CFAG240128U0-NFH Low Power 240x128 Graphic LCD Display](https://www.crystalfontz.com/product/cfag240128u0nfh-low-power-240x128-graphic-lcd)
 
 ### Device Enclosure
-TODO
+3D model, material, and fabrication details coming soon...
+See the general sketch of the front face of the device below:   
+   
+![FSE Device Sketch drawio](https://github.com/user-attachments/assets/d2e239ff-ba75-486b-832b-5c3469d33ba1)
+
