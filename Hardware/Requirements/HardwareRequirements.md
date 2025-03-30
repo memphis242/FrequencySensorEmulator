@@ -125,5 +125,10 @@ To meet the above requirements, the following components have been selected.
    - Microchip Webpage: [MCP47CMD21: 12-Bit Single Output DAC w/MTP and I2C™](https://www.microchip.com/en-us/product/mcp47cmd21)
    - DigiKey: [150-MCP47CMD21T-E/MFCT-ND](https://www.digikey.com/en/products/detail/microchip-technology/MCP47CMD21T-E-MF/16709763)
 
+#### Display
+:scroll: Definitely needs to have ≥ 100 x 100 px to support the various screens.   
+:scroll: It's going to need to be low-power, which means **no backlight** :no_entry_sign::bulb:   
+Crystalfontz [CFAG240128U0-NFH Low Power 240x128 Graphic LCD Display](https://www.crystalfontz.com/product/cfag240128u0nfh-low-power-240x128-graphic-lcd)
+
 ### Device Enclosure
 TODO
