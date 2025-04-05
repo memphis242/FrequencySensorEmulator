@@ -48,6 +48,10 @@ In addition to the terminology introduced by the [System Requirements document](
    - `HRD_19B`: 30% to 60% relative humidity
 1. `HRD_20`: The output signal shall have ≤ ±1mV of **unwanted signal overlay** on top of the base square waveform across its rated frequency range and output load range.
 1. `HRD_21`: The worst-case device efficiency shall be ≥ 80%.
+1. `HRD_22`: There shall be an on-board LED for each voltage rail that indicates the rail's voltage is within ±50% of its expected level.
+   - `HRD_22A`: These LEDs are hidden from the user.
+1. `HRD_23`: There shall be an on-board LED that is blinked at a 1Hz rate after software boot-up that helps indicate that software is generally operating normally.
+   - Justification: The software shall drive this LED in a separate task and place this task at a low priority. If the LED blinks, this means the task is executing and it may be inferred that tasks at a higher priority must have completed execution as well.
 
 ## Physical I/O
 ### Inputs
