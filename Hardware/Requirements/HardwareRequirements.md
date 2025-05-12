@@ -116,6 +116,10 @@ To meet the above requirements, the following components have been selected.
 1. EFM32PG23B210F64IM48-C (Silicon Labs EFM32 PG23 Family)
    - Silicon Labs Webpage: [EFM32PG23B210F64IM48: EFM32PG23 Series 2 MCUs](https://www.silabs.com/mcu/32-bit-microcontrollers/efm32pg23-series-2/device.efm32pg23b210f64im48?tab=techdocs)
    - Digi-Key: [336-EFM32PG23B210F64IM48-C-ND](https://www.digikey.com/en/products/detail/silicon-labs/EFM32PG23B210F64IM48-C/16396764)
+   
+1. CH32V203 - RISC-V (WCH)
+   - WCH Webpage: [32-bit Enhanced Low-Power RISC-V MCU – CH32V203](https://www.wch-ic.com/products/CH32V203.html)
+   - Digi-Key: Closest thing is this breakout board: [1528-5996-ND](https://www.digikey.com/en/products/detail/adafruit-industries-llc/5996/24713464)
 
 #### DAC
 :scroll: Different DACs will be supported in order to diversify this critical component.
